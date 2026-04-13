@@ -1,8 +1,9 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="ar" dir="rtl" translate="no">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="google" content="notranslate">
 <title>War Impact Assessment</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <style>
@@ -170,7 +171,7 @@
     <select id="filterSchool"><option value="">All Schools</option></select>
   </div>
   <div class="filter-group">
-    <label>Affected by Displacement</label>
+    <label>Displaced Faculty</label>
     <select id="filterDisplaced">
       <option value="">All</option>
       <option value="نعم">Yes (نعم)</option>
@@ -178,7 +179,7 @@
     </select>
   </div>
   <div class="filter-group">
-    <label>Traveling Abroad</label>
+    <label>Faculty Currently Outside Lebanon</label>
     <select id="filterTraveling">
       <option value="">All</option>
       <option value="نعم">Yes (نعم)</option>
@@ -189,23 +190,36 @@
 </div>
 
 <div class="kpi-row">
-  <div class="kpi" id="kpiTotal"><div class="value">-</div><div class="label">Total Respondents</div></div>
-  <div class="kpi" id="kpiDisplaced"><div class="value">-</div><div class="label">Affected by Displacement</div></div>
-  <div class="kpi" id="kpiTraveling"><div class="value">-</div><div class="label">Traveling Abroad</div></div>
-  <div class="kpi" id="kpiNotDisplaced"><div class="value">-</div><div class="label">Remaining in Place</div></div>
-  <div class="kpi" id="kpiDisplacedPct"><div class="value">-</div><div class="label">Affected Rate</div></div>
+  <div class="kpi" id="kpiTotal"><div class="value">-</div><div class="label">Faculty Surveyed</div></div>
+  <div class="kpi" id="kpiDisplaced"><div class="value">-</div><div class="label">Displaced Faculty</div></div>
+  <div class="kpi" id="kpiTraveling"><div class="value">-</div><div class="label">Faculty Currently Outside Lebanon</div></div>
+  <div class="kpi" id="kpiNotDisplaced"><div class="value">-</div><div class="label">Faculty Still in Their Homes</div></div>
+  <div class="kpi" id="kpiDisplacedPct"><div class="value">-</div><div class="label">% Displaced</div></div>
 </div>
 
 <div class="dashboard">
-  <!-- Affected Faculty by Campus -->
+  <!-- Support Gaps: Displaced with connectivity / device shortfalls -->
+  <div class="card full">
+    <h3>Displaced Faculty</h3>
+    <p style="color:#718096; font-size:0.85rem; margin-bottom:1rem; line-height:1.5;">Displaced faculty who face the hardest conditions for remote learning. <strong>No Internet</strong> = selected "ليس لدي اشتراك انترنت". <strong>Proper Learning Device</strong> = a laptop, desktop, or tablet (not just a phone). <strong>Critical</strong> = missing both. Per original campus, with rates relative to displaced population.</p>
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:0.8rem; margin-bottom:1rem;">
+      <div class="kpi" style="padding:0.9rem;"><div class="value" id="gapNoInternet" style="color:#e53e3e;">-</div><div class="label">Displaced Faculty Without Internet</div></div>
+      <div class="kpi" style="padding:0.9rem;"><div class="value" id="gapPhoneOnly" style="color:#dd6b20;">-</div><div class="label">Displaced Faculty With Only a Phone</div></div>
+      <div class="kpi" style="padding:0.9rem;"><div class="value" id="gapCritical" style="color:#9b2c2c;">-</div><div class="label">Displaced Faculty Missing Both Internet and a Proper Learning Device</div></div>
+      <div class="kpi" style="padding:0.9rem;"><div class="value" id="gapAnyGap" style="color:#c05621;">-</div><div class="label">Displaced Faculty Missing Internet or a Proper Learning Device</div></div>
+    </div>
+    <div class="table-scroll" id="tableSupportGap"></div>
+  </div>
+
+  <!-- Displaced Faculty by Campus -->
   <div class="card">
-    <h3>Affected Faculty by Campus</h3>
+    <h3>Displaced Faculty by Campus</h3>
     <div class="chart-container"><canvas id="chartCampusDisplacement"></canvas></div>
   </div>
 
-  <!-- Affected Faculty by School -->
+  <!-- Displaced Faculty by School -->
   <div class="card">
-    <h3>Affected Faculty by School</h3>
+    <h3>Displaced Faculty by School</h3>
     <div class="chart-container"><canvas id="chartSchoolDisplacement"></canvas></div>
   </div>
 
@@ -235,14 +249,14 @@
 
   <!-- Nearest Branch (displaced faculty) -->
   <div class="card full">
-    <h3>Nearest Campus for Affected Faculty</h3>
+    <h3>Closest Campus for Displaced Faculty</h3>
     <div class="chart-container"><canvas id="chartNearest"></canvas></div>
   </div>
 
   <!-- Displacement Flow: original campus → nearest campus -->
   <div class="card full">
-    <h3>Affected Faculty Movement: Original Campus → Nearest Campus Now</h3>
-    <p style="color:#718096; font-size:0.85rem; margin-bottom:1rem; line-height:1.5;">Each card represents a campus and shows faculty who had to leave their homes due to the war. The horizontal bars indicate which campus is now geographically nearest to their current residence. This helps understand where affected faculty have moved and plan support accordingly.</p>
+    <h3>Where Displaced Faculty Are Now: Original Campus → Closest Campus</h3>
+    <p style="color:#718096; font-size:0.85rem; margin-bottom:1rem; line-height:1.5;">Each card shows a campus and the faculty from it who were displaced. The horizontal bars indicate which campus is now geographically nearest to their current residence. This helps us see where they are now so support can reach them.</p>
     <div class="table-scroll" id="tableDisplacedFlow"></div>
     <div id="flowChartsGrid" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:1rem; margin-top:1rem;"></div>
   </div>
@@ -262,10 +276,17 @@
     <div class="table-scroll" id="tableDivisionShift" style="max-height:500px;"></div>
   </div>
 
+  <!-- School × Campus Heatmap -->
+  <div class="card full">
+    <h3>Displacement Rate — School × Campus</h3>
+    <p style="color:#718096; font-size:0.85rem; margin-bottom:1rem; line-height:1.5;">Each cell shows the displacement rate for faculty in a given school at a given campus. Darker red = higher share displaced. Numbers read "displaced / total (rate%)". Empty cells mean no respondents in that intersection.</p>
+    <div class="table-scroll" id="heatmapSchoolCampus" style="max-height:560px;"></div>
+  </div>
+
   <!-- Campus Load Shift -->
   <div class="card full">
-    <h3>Campus Redistribution — Resource Planning</h3>
-    <p style="color:#718096; font-size:0.85rem; margin-bottom:1rem; line-height:1.5;">This section shows how displacement has shifted faculty across campuses. <strong>Relocated Away</strong> = faculty originally at this campus who are now nearest to a different one. <strong>Relocated Nearby</strong> = faculty from other campuses who are now nearest to this one. <strong>Net Change</strong> = Relocated Nearby − Relocated Away. A positive value means the campus may need additional support and resources; a negative value means fewer faculty are currently nearby.</p>
+    <h3>Where Displaced Faculty Are Now — Planning Support by Campus</h3>
+    <p style="color:#718096; font-size:0.85rem; margin-bottom:1rem; line-height:1.5;">This shows how families have moved across campuses since the war. <strong>Relocated Away</strong> = faculty originally at this campus who are now nearest to a different one. <strong>Relocated Nearby</strong> = faculty from other campuses who are now nearest to this one. <strong>Net Change</strong> = Relocated Nearby − Relocated Away. A positive number means this campus likely needs more support; a negative number means fewer of its faculty are nearby right now.</p>
     <div class="table-scroll" id="tableLoadShift"></div>
   </div>
 </div>
@@ -404,7 +425,7 @@ function updateDashboard() {
   document.querySelector('#kpiNotDisplaced .value').textContent = notDisplaced;
   document.querySelector('#kpiDisplacedPct .value').textContent = pct + '%';
 
-  // ── Affected Faculty by Campus (stacked bar, sorted by total desc) ──
+  // ── Displaced Faculty by Campus (stacked bar, sorted by total desc) ──
   const campusTotals = CAMPUSES.map(c => ({ label: c, total: filtered.filter(r => splitMulti(r.campus).includes(c)).length }));
   campusTotals.forEach(c => {
     const d = filtered.filter(r => splitMulti(r.campus).includes(c.label) && r.displaced === 'نعم').length;
@@ -431,7 +452,7 @@ function updateDashboard() {
     }
   });
 
-  // ── Affected Faculty by School (stacked bar, sorted by total desc) ──
+  // ── Displaced Faculty by School (stacked bar, sorted by total desc) ──
   const schoolTotals = SCHOOLS.map(s => ({ label: s, total: filtered.filter(r => splitMulti(r.school).includes(s)).length }));
   schoolTotals.forEach(s => {
     const d = filtered.filter(r => splitMulti(r.school).includes(s.label) && r.displaced === 'نعم').length;
@@ -608,7 +629,7 @@ function updateDashboard() {
 
       const wrapper = document.createElement('div');
       wrapper.style.cssText = 'background:#f7fafc; border:1px solid #e2e8f0; border-radius:8px; padding:1rem;';
-      wrapper.innerHTML = `<div style="font-weight:600; color:#1a365d; margin-bottom:0.5rem; font-size:0.9rem;">${orig} <span style="color:#718096; font-weight:400;">(${totalOrig} affected)</span></div>`;
+      wrapper.innerHTML = `<div style="font-weight:600; color:#1a365d; margin-bottom:0.5rem; font-size:0.9rem;">${orig} <span style="color:#718096; font-weight:400;">(${totalOrig} displaced)</span></div>`;
 
       const canvas = document.createElement('canvas');
       canvas.style.maxHeight = '180px';
@@ -724,7 +745,7 @@ function updateDashboard() {
       { key: 'campus', label: 'Campus' },
       { key: 'division', label: 'Division' },
       { key: 'stayed', label: 'Remained Nearby' },
-      { key: 'out', label: 'Relocated Away' },
+      { key: 'out', label: 'Left This Area' },
       { key: 'inn', label: 'Relocated In' },
       { key: 'net', label: 'Net Shift' }
     ],
@@ -736,6 +757,115 @@ function updateDashboard() {
     }
   );
 
+
+
+  // ── Support Gaps (displaced + connectivity/device shortfalls) ──
+  const NO_INTERNET = 'ليس لدي اشتراك انترنت';
+  const DEVICE_TOKENS_NON_PHONE = ['Laptop', 'Desktop', 'Tablet'];
+  const isPhoneOnly = r => {
+    const devs = (r.devices || '');
+    if (!devs.includes('Cellphone')) return false;
+    return !DEVICE_TOKENS_NON_PHONE.some(t => devs.includes(t));
+  };
+  const isNoInternet = r => (r.internet || '').includes(NO_INTERNET);
+  const gapBase = filtered.filter(r => r.displaced === 'نعم');
+
+  const noNet = gapBase.filter(isNoInternet).length;
+  const phoneOnly = gapBase.filter(isPhoneOnly).length;
+  const critical = gapBase.filter(r => isNoInternet(r) && isPhoneOnly(r)).length;
+  const anyGap = gapBase.filter(r => isNoInternet(r) || isPhoneOnly(r)).length;
+  document.getElementById('gapNoInternet').textContent = noNet;
+  document.getElementById('gapPhoneOnly').textContent = phoneOnly;
+  document.getElementById('gapCritical').textContent = critical;
+  document.getElementById('gapAnyGap').textContent = anyGap;
+
+  const gapRows = CAMPUSES.map(campus => {
+    const atCampus = gapBase.filter(r => splitMulti(r.campus).includes(campus));
+    const total = atCampus.length;
+    const nn = atCampus.filter(isNoInternet).length;
+    const po = atCampus.filter(isPhoneOnly).length;
+    const cr = atCampus.filter(r => isNoInternet(r) && isPhoneOnly(r)).length;
+    const any = atCampus.filter(r => isNoInternet(r) || isPhoneOnly(r)).length;
+    const pct = total > 0 ? ((any / total) * 100).toFixed(1) : '0.0';
+    const pctNet = total > 0 ? ((nn / total) * 100).toFixed(1) : '0.0';
+    return { campus, total, nn, po, cr, any, pct: parseFloat(pct), pctNet: parseFloat(pctNet) };
+  }).filter(r => r.total > 0);
+
+  renderSortableTable('tableSupportGap', gapRows,
+    [
+      { key: 'campus', label: 'Campus' },
+      { key: 'total', label: 'Displaced' },
+      { key: 'nn', label: 'No Internet' },
+      { key: 'po', label: 'Only a Phone' },
+      { key: 'cr', label: 'Missing Both' },
+      { key: 'pctNet', label: '% No Internet' },
+      { key: 'any', label: 'Missing Internet or Learning Device' },
+      { key: 'pct', label: '% Missing Internet or Learning Device' }
+    ],
+    'any', 'desc',
+    r => '<td>' + r.campus + '</td><td>' + r.total + '</td><td>' + r.nn + '</td><td>' + r.po + '</td><td style="color:#9b2c2c;font-weight:700">' + r.cr + '</td><td><span class="pct-bar" style="width:' + Math.max(r.pctNet * 1.5, 2) + 'px"></span>' + r.pctNet + '%</td><td>' + r.any + '</td><td><span class="pct-bar" style="width:' + Math.max(r.pct * 1.5, 2) + 'px"></span>' + r.pct + '%</td>'
+  );
+
+
+  // ── School × Campus Heatmap ──
+  (function() {
+    const container = document.getElementById('heatmapSchoolCampus');
+    if (!container) return;
+    const rateColor = r => {
+      if (r == null) return '#f7fafc';
+      const t = Math.min(1, r / 100);
+      const hue = 210 - t * 210;
+      const sat = 40 + t * 35;
+      const light = 92 - t * 42;
+      return 'hsl(' + hue + ',' + sat + '%,' + light + '%)';
+    };
+    const textColor = r => (r != null && r >= 50) ? '#fff' : '#2d3748';
+
+    const schoolTotals = SCHOOLS.map(s => ({
+      s,
+      total: filtered.filter(r => splitMulti(r.school).includes(s)).length
+    })).filter(x => x.total > 0).sort((a, b) => b.total - a.total);
+
+    let html = '<table style="font-size:0.8rem;"><thead><tr><th style="background:#f1f5f9; position:sticky; left:0; z-index:2;">School \\ Campus</th>';
+    CAMPUSES.forEach(c => { html += '<th style="text-align:center;">' + c + '</th>'; });
+    html += '<th style="text-align:center; background:#edf2f7;">All Campuses</th></tr></thead><tbody>';
+
+    schoolTotals.forEach(({ s }) => {
+      html += '<tr><td style="font-weight:600; background:#fff; position:sticky; left:0;">' + s + '</td>';
+      CAMPUSES.forEach(c => {
+        const cell = filtered.filter(r => splitMulti(r.school).includes(s) && splitMulti(r.campus).includes(c));
+        const total = cell.length;
+        const disp = cell.filter(r => r.displaced === 'نعم').length;
+        if (total === 0) {
+          html += '<td style="background:#f7fafc; color:#cbd5e0; text-align:center;">—</td>';
+        } else {
+          const rate = (disp / total) * 100;
+          html += '<td style="background:' + rateColor(rate) + '; color:' + textColor(rate) + '; text-align:center; white-space:nowrap;" title="' + disp + ' displaced of ' + total + '">' + disp + '/' + total + '<br><strong>' + rate.toFixed(0) + '%</strong></td>';
+        }
+      });
+      const rowAll = filtered.filter(r => splitMulti(r.school).includes(s));
+      const rowDisp = rowAll.filter(r => r.displaced === 'نعم').length;
+      const rowRate = rowAll.length > 0 ? (rowDisp / rowAll.length) * 100 : 0;
+      html += '<td style="background:' + rateColor(rowRate) + '; color:' + textColor(rowRate) + '; text-align:center; font-weight:700;">' + rowDisp + '/' + rowAll.length + '<br>' + rowRate.toFixed(0) + '%</td>';
+      html += '</tr>';
+    });
+
+    html += '<tr><td style="font-weight:700; background:#edf2f7; position:sticky; left:0;">All Schools</td>';
+    CAMPUSES.forEach(c => {
+      const colAll = filtered.filter(r => splitMulti(r.campus).includes(c));
+      const colDisp = colAll.filter(r => r.displaced === 'نعم').length;
+      if (colAll.length === 0) { html += '<td style="background:#edf2f7;">—</td>'; return; }
+      const colRate = (colDisp / colAll.length) * 100;
+      html += '<td style="background:' + rateColor(colRate) + '; color:' + textColor(colRate) + '; text-align:center; font-weight:700;">' + colDisp + '/' + colAll.length + '<br>' + colRate.toFixed(0) + '%</td>';
+    });
+    const grandTotal = filtered.length;
+    const grandDisp = filtered.filter(r => r.displaced === 'نعم').length;
+    const grandRate = grandTotal > 0 ? (grandDisp / grandTotal) * 100 : 0;
+    html += '<td style="background:' + rateColor(grandRate) + '; color:' + textColor(grandRate) + '; text-align:center; font-weight:700;">' + grandDisp + '/' + grandTotal + '<br>' + grandRate.toFixed(0) + '%</td></tr>';
+
+    html += '</tbody></table>';
+    container.innerHTML = html;
+  })();
 
   // ── Campus Load Shift ──
   const allDisplaced = filtered.filter(r => r.displaced === 'نعم');
@@ -764,7 +894,7 @@ function updateDashboard() {
 
   // Table
   renderSortableTable('tableLoadShift', loadData,
-    [{ key: 'campus', label: 'Campus' }, { key: 'totalFaculty', label: 'Total Faculty' }, { key: 'displacedOut', label: 'Relocated Away' }, { key: 'displacedIn', label: 'Relocated Nearby' }, { key: 'stayedDisplaced', label: 'Remained in Area' }, { key: 'netShift', label: 'Net Change' }],
+    [{ key: 'campus', label: 'Campus' }, { key: 'totalFaculty', label: 'Total Faculty' }, { key: 'displacedOut', label: 'Left This Area' }, { key: 'displacedIn', label: 'Arrived From Elsewhere' }, { key: 'stayedDisplaced', label: 'Stayed Nearby' }, { key: 'netShift', label: 'Net Change' }],
     'totalAffected', 'desc', r => {
       const shiftColor = r.netShift > 0 ? 'color:#e53e3e;font-weight:700' : r.netShift < 0 ? 'color:#2b6cb0;font-weight:700' : 'color:#718096';
       const shiftLabel = r.netShift > 0 ? '+' + r.netShift : r.netShift.toString();
